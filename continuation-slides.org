@@ -117,7 +117,8 @@ idea:   (+ _ 4)
 
 ** Context is important
 
-- ~kont → #<continuation>~ — and /not/ $\:$ ~→ #<procedure>~
+- ~kont~ looks and feels like a function.
+- But ~kont → #<continuation>~ — /not/ $\:$ ~→ #<procedure>~
 - The captured continuation is /not/ just a function.
 - When called upon, it invokes the entire original context!
 
@@ -146,7 +147,6 @@ idea:   (+ _ 4)
   - Generators
   - …and more.
 - Facilities can live in /libraries/ rather than a language standard.
-
 
 * Mind Bending
 
