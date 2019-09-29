@@ -1,0 +1,198 @@
+#+STARTUP: beamer
+#+TITLE: Understanding Continuations
+#+AUTHOR: Frank Terbeck
+#+EMAIL: ft@bewatermyfriend.org
+#+LANGUAGE: en
+#+KEYWORDS: scheme racket continuations
+#+LANGUAGE: en
+#+OPTIONS: H:2 toc:nil email:t
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [presentation,aspectratio=169]
+#+LATEX_HEADER: \setbeamertemplate{navigation symbols}{}
+#+LATEX_HEADER: \usepackage{ebgaramond}
+#+LATEX_HEADER: \usefonttheme{serif}
+#+LATEX_HEADER: \usetheme{Pittsburgh}
+#+LATEX_HEADER: \setbeamertemplate{caption}[numbered]
+#+LATEX_HEADER: \setbeamertemplate{caption label separator}{: }
+#+LATEX_HEADER: \setbeamercolor{caption name}{fg=normal text.fg}
+#+BEAMER_HEADER: \author{\texorpdfstring{Frank Terbeck\newline\tiny{\url{ft@bewatermyfriend.org}}}{Frank Terbeck}}
+#+BEAMER_HEADER: \AtBeginSection{\let\insertsectionnumber\relax \let\sectionname\relax \frame{\sectionpage}}
+
+* Continuations?
+
+** Simple Example
+
+#+BEGIN_SRC scheme
+                            (+ 5 4)
+#+END_SRC
+
+** Simple Example
+
+#+BEGIN_SRC scheme
+                            (+ 5 4) → 9
+#+END_SRC
+
+** Simple Example
+
+#+BEGIN_SRC scheme
+                       (lambda (x) (* x x))
+#+END_SRC
+
+** Simple Example
+
+#+BEGIN_SRC scheme
+                (define (square x) (* x x))
+#+END_SRC
+
+** Simple Example
+
+#+BEGIN_SRC scheme
+                               (square 5) → 25
+                 ((lambda (x) (* x x)) 5) → 25
+#+END_SRC
+
+** Main Strategy
+
+- Computation: ~(+ 5 4)~
+- Task: Express Continuation at the point of ~5~
+\vspace{0.25cm}
+- Idea: Take perspective of the ~5~
+- With that, find a function:
+  - …that takes one argument…
+  - …and represents the rest of the computation
+  - …after ~5~ is evaluated.
+- /That/ is our continuation!
+
+** Our First Continuation
+
+#+BEGIN_SRC scheme
+idea:   (+ _ 4)
+
+        (define (kont v)
+          (+ v 4))
+
+        (kont  5) →  9
+        (kont 10) → 14
+#+END_SRC
+
+* Beyond Theory — ~call/cc~
+
+** Beyond Theory
+
+- Thus far continuations are thought experiments.
+- Scheme: ~call-with-current-continuation~
+- …shorthand: ~call/cc~
+- Its jobs:
+  - Capture a continuation.
+  - Make it accessible to the programmer.
+
+** Beyond Theory
+
+- Signature: ~(call/cc fnc)~
+- ~fnc~ takes one argument: The continuation ~k~.
+- Return value of ~call/cc~: The value of ~(fnc k)~.
+- Example: ~(call/cc (lambda (k) 5)) → 5~
+
+** Storing Continuations
+
+#+BEGIN_EXAMPLE
+        (+ 5 4) → 9
+
+        (define kont #f)
+        (define (five k)
+          (set! kont k)
+          5)
+
+        (+ (call/cc five) 4) → 9
+#+END_EXAMPLE
+
+** Storing Continuations
+
+#+BEGIN_EXAMPLE
+        kont → #<continuation>
+
+        (kont  5) →  9
+        (kont 10) → 14
+#+END_EXAMPLE
+
+** Context is important
+
+- ~kont → #<continuation>~ — and /not/ $\:$ ~→ #<procedure>~
+- The captured continuation is /not/ just a function.
+- When called upon, it invokes the entire original context!
+
+** Practicality
+
+- Product: ~(fold * (*) '(1 2 3 4 0 6 7 8 9 10)) → 0~
+- How about early exit:
+
+#+BEGIN_SRC scheme
+    (call/cc (lambda (return)
+                (fold (lambda (element accumulator)
+                        (if (zero? element)
+                          (return 0)
+                          (* element accumulator)))
+                      (*)
+                      '(1 2 3 4 0 6 7 8 9 10)))) → 0
+#+END_SRC
+
+** Practicality
+
+- Continuations are a powerful control flow primitive.
+- Enables implementation of things like:
+  - Early Exit
+  - Exceptions
+  - Co-Routines
+  - Generators
+  - …and more.
+- Facilities can live in /libraries/ rather than a language standard.
+
+
+* Mind Bending
+
+** Mind Bending
+
+- ~(((call/cc identity) identity) "Hey!") → "Hey!"~
+- Confusion Density Maximum[fn:confusion]
+- identity: ~(lambda (x) x)~
+
+[fn:confusion] According to R. Kent Dybvig.
+
+** Mind Bending
+
+- ~(((call/cc identity) identity) "Hey!") → "Hey!"~
+- Since: ~(operator operand) → operand~
+- ~operator~ has to be ~identity~[fn:nosideeffects]
+
+[fn:nosideeffects] Barring any side-effects.
+
+** Mind Bending
+
+- ~((call/cc identity) identity) → identity~
+- Use strategy with: ~(_ identity)~
+- What is a function that:
+  - …represents the rest of the computation…
+  - …from the perspective of ~_~?
+- Answer:
+
+#+BEGIN_SRC scheme
+        (lambda (v)
+          (v identity))
+#+END_SRC
+
+** Mind Bending
+
+#+BEGIN_SRC scheme
+To show:   ((call/cc identity) identity) → identity
+
+continuation:           (lambda (v) (v identity))
+call/cc:      (identity (lambda (v) (v identity)))
+into expr:             ((lambda (v) (v identity)) identity)
+                           → (identity identity)
+                           → identity
+
+         (((call/cc identity) identity) "Hey!")
+         (identity                      "Hey!") → "Hey!"
+#+END_SRC
+
+* Thanks for your attention!
