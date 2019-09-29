@@ -50,6 +50,17 @@
                                (square 5) → 25
                  ((lambda (x) (* x x)) 5) → 25
 #+END_SRC
+** Simple Example
+
+#+BEGIN_SRC scheme
+                 (if Condition
+                   Consequence
+                   Alternative)
+
+                 (if (zero? 3)
+                   (display "foo")
+                   (display "bar"))
+#+END_SRC
 
 ** Main Strategy
 
