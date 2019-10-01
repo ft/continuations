@@ -148,8 +148,9 @@ idea:   (+ _ 4)
                       '(1 2 3 4 0 6 7 8 9 10)))) → 0
 #+END_SRC
 
-** Practicality
+** Conclusion
 
+\vspace{0.5cm}
 - Continuations are a powerful control flow primitive.
 - Enables implementation of things like:
   - Early Exit
@@ -158,6 +159,11 @@ idea:   (+ _ 4)
   - Generators
   - …and more.
 - Facilities can live in /libraries/ rather than a language standard.
+\vspace{1.5cm}
+- Blog:$\quad$ http://bewatermyfriend.org/p/2019/002/
+- Source:$\;$ https://github.com/ft/continuations
+
+* Fin?
 
 * Mind Bending
 
