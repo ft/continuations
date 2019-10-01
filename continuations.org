@@ -4,6 +4,13 @@
 #+LATEX_CLASS: article
 #+LATEX_CLASS_OPTIONS: [a4paper]
 #+LATEX_HEADER: \usepackage[style=alphabetic,bibstyle=alphabetic,hyperref=true,maxcitenames=3,url=true,backend=biber,natbib=true]{biblatex}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \hypersetup{
+#+LATEX_HEADER:     colorlinks=true,
+#+LATEX_HEADER:     linkcolor=blue,
+#+LATEX_HEADER:     filecolor=magenta,
+#+LATEX_HEADER:     urlcolor=blue,
+#+LATEX_HEADER:     citecolor=red}
 #+LATEX_HEADER: \addbibresource{references.bib}
 #+LATEX_HEADER: \pagenumbering{gobble}
 #+LATEX_HEADER: \usepackage[a4paper, top=2.5cm, headsep=1cm, bottom=2.5cm, left=4.45cm, right=4.45cm, includehead]{geometry}
