@@ -1,0 +1,18 @@
+Understanding Continuations — With Examples in Scheme
+
+These is a PDF version of a blog  article¹, and a couple of slides to illu-
+strate the  concept and applications  of full, unbounded  continuations, as
+found in some programming languages such as Scheme and Standard ML.
+
+The article is available in PDF form in:
+
+    continuations.pdf
+
+The slides used in a workplace lightning talk are available in:
+
+    continuation-slides.pdf
+
+Both the articles and the slides are covered by Creative Commons BY-SA 4.0².
+
+¹ http://bewatermyfriend.org/p/2019/002/
+² https://creativecommons.org/licenses/by-sa/4.0/
