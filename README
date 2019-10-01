@@ -1,6 +1,6 @@
 Understanding Continuations — With Examples in Scheme
 
-These is a PDF version of a blog  article¹, and a couple of slides to illu-
+These are a PDF version of a blog article¹, and a couple of slides to illu-
 strate the  concept and applications  of full, unbounded  continuations, as
 found in some programming languages such as Scheme and Standard ML.
 
