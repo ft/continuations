@@ -3,12 +3,15 @@
 #+EMAIL: ft@bewatermyfriend.org
 #+LATEX_CLASS: article
 #+LATEX_CLASS_OPTIONS: [a4paper]
+#+LATEX_HEADER: \usepackage[style=alphabetic,bibstyle=alphabetic,hyperref=true,maxcitenames=3,url=true,backend=biber,natbib=true]{biblatex}
+#+LATEX_HEADER: \addbibresource{references.bib}
 #+LATEX_HEADER: \pagenumbering{gobble}
+#+LATEX_HEADER: \usepackage[a4paper, top=2.5cm, headsep=1cm, bottom=2.5cm, left=4.45cm, right=4.45cm, includehead]{geometry}
 #+LANGUAGE: en
 #+OPTIONS: toc:nil email:t
 
 Not too many programming languages have the concept of first-class
-continuations built into them. Scheme is one that does, so it will be our
+continuations built into them. Scheme is one that does[fn:6], so it will be our
 vehicle for today's adventure. Now what really is a continuation? In order to
 get an idea, consider the following simple expression:
 
@@ -16,18 +19,18 @@ get an idea, consider the following simple expression:
 (+ 5 4)
 #+END_SRC
 
-Remember that Scheme uses prefix notation, where the first item in a
+Remember that Scheme uses prefix notation[fn:5], where the first item in a
 parenthesised list is the operator, that is applied to the list of arguments,
 which is the rest of the list. ~+~ is the sum-operator, so the above expression
 evaluates to ~9~. So far, so good. How does this help with continuations? Well,
 a continuation is a way of bundling up “what's left to do” with respect to an
 arbitrary sub-expression within a program.
 
-Imagine the perspective of the literal ~5~ in the expression above. there. If
-you are this five, look around you and try to come up with a function, that
-would represent the rest of the computation after you are done
-evaluating[fn:2]. So in the expression above, after ~5~ evaluates to five, what
-is left to be done in order to finally evaluate to 9? Here's a suggestion:
+Imagine the perspective of the literal ~5~ in the expression above. If you are
+this five, look around you and try to come up with a function, that would
+represent the rest of the computation after you are done evaluating[fn:2]. So
+in the expression above, after ~5~ evaluates to five, what is left to be done
+in order to finally evaluate to 9? Here's a suggestion:
 
 #+BEGIN_SRC scheme
 (define (kont v)
@@ -36,32 +39,34 @@ is left to be done in order to finally evaluate to 9? Here's a suggestion:
 
 Indeed, after evaluating the ~5~ literal, the rest of the expression can be
 represented as a function, that takes one value and adds ~4~ to it. And if you
-stick the value of ~5~ into that function it will return ~9~, like it must.
+stick the value of ~5~ into that function, it will return ~9~, like it must.
 
 Once you realise that you need to take the perspective of a part of an
-expression in order to figure out what the continuation does it is not hard to
+expression in order to figure out what the continuation does, it is not hard to
 figure out these functions for arbitrarily complex expressions. It just takes a
-little but of practice. But this is thus far just a theoretical idea. How would
-you work with continuations? How to you *get* to them?
+little bit of practice. But thus far, this is just a theoretical idea. How
+would you work with continuations? How to you /get/ to them?
 
 In Scheme (and also Standard ML), there is an operator called ~call/cc~, which
 is short for ~call-with-current-continuation~. Its purpose is to capture the
-continuation at a certain point in an expression and make it available to the
+continuation at a certain point in a program and make it available to the
 programmer. The name ~call-with-*~ suggests, that the operator needs something
 that it can call. That would be a function. This function has to take one
-argument and ~call/cc~ will hand the continuation it captured *into* that
-function when it calls it. And indeed, that function parameter is the only
-argument that ~call/cc~ expects. Here are simple examples, that use ~call/cc~:
+argument and ~call/cc~ will call that function with the continuation it
+captured as the function's only argument. This function parameter is the only
+argument that ~call/cc~ expects and the return value of the ~call/cc~
+invocation is the value of the the supplied function applied to the captured
+continuation. Here are simple examples, that use ~call/cc~:
 
 #+BEGIN_EXAMPLE
 (call/cc (lambda (k) 5)) → 5
-(+ (call/cc (lambda (k) 5)) 4) → 8
+(+ (call/cc (lambda (k) 5)) 4) → 9
 #+END_EXAMPLE
 
-Pretty boring, since these don't *use* the continuation at all, but they are
-meant to give you an idea of how a call to this operator looks like. Now for
-something more interesting: Since Scheme allows us to mutate memory, we can
-just store the continuation in a parameter for later use:
+Since these don't *use* the continuation at all, it is straight forward to tell
+the values these expressions evaluate to. Now for something more interesting:
+Since Scheme allows us to mutate memory[fn:7], we can just store the
+continuation in a parameter for later use:
 
 #+BEGIN_EXAMPLE
 (define kont #f)
@@ -84,16 +89,17 @@ kont → #<continuation>
 (kont 10) → 14
 #+END_EXAMPLE
 
-Here we are reusing our first example. And remember that figured out that the
-continuation right after evaluating the ~5~ is a function that adds ~4~ to its
-one and only argument? Well, look at what applying the continuation (stored in
+Remember when we defined a /function/ called ~kont~ earlier? We figured out
+that the continuation right after evaluating the ~5~ is a function that adds
+~4~ to its one and only argument. Now applying the continuation (stored in
 ~kont~) to a value of ~10~ results in: 14 — just as we predicted.
 
 The captured continuation has a special property, that sets it apart from being
-a simple function: When it is invoked, it resurrects itself entirely, no matter
-where the program went in the meantime. This property can be used to implement
-all sorts of useful high-level control flow facilities. A simple, easily
-understood one is “early exit”. Consider this:
+a simple function: When it is invoked, it resurrects its execution context
+entirely and abandons the current one, no matter where the program went in the
+meantime. This property can be used to implement all sorts of useful high-level
+control flow facilities. A simple, easily understood one is “early exit”.
+Consider this:
 
 #+BEGIN_EXAMPLE
 (fold * (*) '(1 2 3 4 0 6 7 8 9 10)) → 0
@@ -102,8 +108,8 @@ understood one is “early exit”. Consider this:
 This is an expression that computes the product of all values in the list, that
 is the last argument to ~fold~[fn:3]. Since any integer being multiplied by
 zero results in zero, the computation could stop at the fifth element of the
-input list. However, ~fold~ has no concept if exiting early. We can add that
-using ~call/cc~:
+input list. However, ~fold~ has no concept of exiting early. Since we have
+~call/cc~, we can easily add that:
 
 #+BEGIN_EXAMPLE
 (call/cc (lambda (return)
@@ -128,27 +134,29 @@ abandons the current one.
 
 Now in order to see if you understood continuations, at this point in other
 texts on the subject, you get confronted with mind-benders like the following,
-which is from R. Kent Dybvig's book “The Scheme Programming Language”:
+which is from cite:TSPL page 64[fn:8]:
 
 #+BEGIN_SRC scheme
 (((call/cc identity) identity) "Hey!")
 #+END_SRC
 
 If you evaluate this at a Scheme prompt, it will return the string ~"Hey!"~.
-The question is: Why? Let's analyse the expression's form first: At its most
-primitive, this expression can be summarised like this:
+This might be guessable, but the question is: Why? Let's analyse the
+expression's form first: At its most primitive, this expression can be
+summarised like this:
 
 #+BEGIN_SRC scheme
 (operator operand)
 #+END_SRC
 
-We immediately see, that ~operand~ has the value ~"Hey!"~. And since we know
-the result of the final evaluation is that same value, we can (barring side
-effects) reason that ~operator~ has to be the identity function[fn:4]. And
-guess what: That function is right in there. Feels like we are on the right
-track! Though, if you think that this incarnation of the identity function gets
-somehow ends up as the final result of this expression, you will notice that
-things are not quite as easy is they seemed[fn:1]:
+The ~operand~ has the value ~"Hey!"~, trivilly. And since we know the result of
+the final evaluation is that same value, we can (barring side effects) reason
+that ~operator~ has to be the identity function[fn:4]. Since that function
+appears twice in the original expression, it feels like we are on the right
+track! A guess would be, that the second incarnation of ~identity~ somehow gets
+transposed into the operator spot. Maybe we can just replace it with something
+else, like ~string-upcase~. But if you try, you will notice that things are not
+quite as easy is they seemed[fn:1]:
 
 #+BEGIN_EXAMPLE
 (((call/cc identity) string-upcase) "Hey!")
@@ -167,17 +175,16 @@ expression, that is our ~operand~:
 With our previous strategy we need to look at ~(op identity)~, put ourselves in
 the perspective of ~op~ and ask: What function represents the rest of the
 computation after I am done evaluating myself? And you can follow that strategy
-mechanically:
+pretty mechanically:
 
 #+BEGIN_SRC scheme
 (define (k v)
   (v identity))
 #+END_SRC
 
-This is what gets captured by the argument to ~identity~ in ~(call/cc
-identity)~ here. And since it is indeed ~identity~, all it does is return the
-continuation it is handed. That is all it does. Which means, we end up with
-this:
+This is what gets handed in as the argument to ~identity~ in ~(call/cc
+identity)~. And since it is ~identity~, all it does is return the continuation
+it is handed. That is all it does. Which means, we end up with this:
 
 #+BEGIN_SRC scheme
 ((lambda (op) (op identity)) identity)
@@ -206,9 +213,13 @@ as early-exit (as we have seen earlier), exceptions, co-routines, generators,
 and more. In a language with first-class continuations all these features can
 be implemented in a library without further language support.
 
-Finally, let's not overlook that there are [[http://okmij.org/ftp/continuations/against-callcc.html][problems]] with full, unbounded
-continuations as well. But then there's delimited-continuations as well. That
-is, however, a story for another day.
+Finally, let's not overlook that there are problems with full, unbounded
+continuations as well: For details on that, see cite:okagainstcallcc. To
+alleviate most of these concerns, we might take a look at delimited
+continuations. That is, however, a story for another day.
+
+\printbibliography
+
 
 [fn:1] As we will see later, this intuition is not completely wrong, but there
 is a twist!
@@ -217,3 +228,8 @@ subexpression that would be picked could be arbitrarily complex.
 [fn:3] The ~*~ symbol evaluates to the multiplication function and ~(*)~
 evaluates to the identity element of multiplication, namely ~1~.
 [fn:4] ~(lambda (x) x)~
+[fn:5] See cite:SICP p.8f
+[fn:6] See cite:R4RS p.28f
+[fn:7] I know, I know.
+[fn:8] According to the author it is “probably the most confusing Scheme
+program of its size”, a Confusion Desity Maximum, if you will.
