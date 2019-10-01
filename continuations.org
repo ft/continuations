@@ -227,6 +227,8 @@ continuations. That is, however, a story for another day.
 
 \printbibliography
 
+This article was published at http://bewatermyfriend.org/p/2019/002/; its
+markup source can be viewed at https://github.com/ft/continuations.
 
 [fn:1] As we will see later, this intuition is not completely wrong, but there
 is a twist!
